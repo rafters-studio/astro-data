@@ -1,0 +1,95 @@
+{
+  "name": "@rafters/astro-data",
+  "version": "0.0.0",
+  "description": "The loader and action contract Astro is missing. Composes with smugglr for local-first, with kelex for schema-generated forms.",
+  "keywords": [
+    "action",
+    "astro",
+    "data",
+    "loader",
+    "local-first",
+    "rafters"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js"
+    },
+    "./elements": {
+      "types": "./dist/elements.d.ts",
+      "import": "./dist/elements.js"
+    },
+    "./nanostores": {
+      "types": "./dist/nanostores.d.ts",
+      "import": "./dist/nanostores.js"
+    },
+    "./zustand": {
+      "types": "./dist/zustand.d.ts",
+      "import": "./dist/zustand.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "test": "vitest run",
+    "test:spec": "vitest run --config vitest.browser.config.ts",
+    "test:all": "pnpm test && pnpm test:spec",
+    "ci": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:all"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@types/react": "^19.0.0",
+    "@vitest/browser": "^4.1.0",
+    "astro": "^6.1.9",
+    "lefthook": "^2.1.4",
+    "nanostores": "^1.0.0",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
+    "playwright": "^1.49.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0",
+    "zustand": "^5.0.0"
+  },
+  "peerDependencies": {
+    "astro": "^6.0.0",
+    "nanostores": "^1.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "nanostores": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "zustand": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.32.1"
+}
