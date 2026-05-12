@@ -23,6 +23,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./astro": {
+      "types": "./dist/astro.d.ts",
+      "import": "./dist/astro.js"
+    },
     "./react": {
       "types": "./dist/react.d.ts",
       "import": "./dist/react.js"
@@ -49,7 +53,7 @@
     "test": "vitest run",
     "test:spec": "vitest run --config vitest.browser.config.ts",
     "test:all": "pnpm test && pnpm test:spec",
-    "ci": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:all"
+    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",

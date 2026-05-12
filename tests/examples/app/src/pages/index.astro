@@ -1,0 +1,41 @@
+---
+import "../data.js"; // configure cache once
+import { runLoader } from "@rafters/astro-data";
+import * as ProfileLoader from "../loaders/profile.js";
+import Dashboard from "../components/Dashboard.tsx";
+
+const profile = await runLoader(ProfileLoader, Astro, {
+  userId: Astro.locals.currentUserId,
+});
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>astro-data example</title>
+  </head>
+  <body>
+    <header>
+      <h1>@rafters/astro-data — example</h1>
+      <p>
+        Loader runs server-side, data inlined into HTML, island hydrates with
+        cache-backed subscription. Submitting the form runs an Astro Action,
+        the action's return value populates the loader cache, the island
+        re-renders.
+      </p>
+    </header>
+
+    <Dashboard initialData={profile} client:load />
+
+    <footer>
+      <p>
+        Source:
+        <a href="https://github.com/rafters-studio/astro-data"
+          >github.com/rafters-studio/astro-data</a
+        >
+      </p>
+    </footer>
+  </body>
+</html>

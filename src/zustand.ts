@@ -1,10 +1,11 @@
-// @rafters/astro-data/zustand — Cache adapter backed by Zustand
+// @rafters/astro-data/zustand — Cache adapter
 //
-// Pass `store` to compose with an alternate factory — e.g. smugglr's
-// zustand bridge for local-first persistence and sync. Default is
-// in-memory Zustand stores.
+// v0.1 wraps an in-memory hierarchical cache. The `store` parameter is the
+// composition seam where smugglr's zustand bridge slots in for local-first
+// persistence and sync.
 
 import type { Cache } from "./index.js";
+import { createMemoryCache } from "./internal/cache-memory.js";
 
 export interface ZustandStoreFactory {
   createStore<T>(initial?: T): unknown;
@@ -15,5 +16,5 @@ export interface ZustandCacheOptions {
 }
 
 export function createZustandCache(_opts?: ZustandCacheOptions): Cache {
-  throw new Error("not implemented");
+  return createMemoryCache();
 }
