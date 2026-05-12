@@ -4,7 +4,7 @@
 // Astro action handle and invalidates the module's revalidates keys after
 // success.
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import type { JSX, ReactNode } from "react";
 import {
   type ActionInput,
@@ -140,11 +140,6 @@ export function Form<M extends ActionModule>(props: FormProps<M>): JSX.Element {
     },
     [action, onSuccess, onError],
   );
-
-  // Hint for kelex / consumers wiring per-field state via context (v0.2).
-  useEffect(() => {
-    // Reserved for future field-error context provider.
-  }, []);
 
   return (
     <form className={className} onSubmit={handleSubmit}>
