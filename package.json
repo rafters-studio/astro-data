@@ -1,6 +1,6 @@
 {
   "name": "@rafters/astro-data",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "The loader and action contract Astro is missing. Composes with smugglr for local-first, with kelex for schema-generated forms.",
   "keywords": [
     "action",
@@ -32,6 +32,7 @@
     "CHANGELOG.md"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -74,7 +75,6 @@
     "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.0",
     "@types/react": "^19.0.0",
     "@vitest/browser": "^4.1.0",
     "astro": "^6.1.9",
