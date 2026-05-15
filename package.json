@@ -1,6 +1,6 @@
 {
   "name": "@rafters/astro-data",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "The loader and action contract Astro is missing. Composes with smugglr for local-first, with kelex for schema-generated forms.",
   "keywords": [
     "action",
