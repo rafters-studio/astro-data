@@ -6,10 +6,6 @@ Astro has pages, server islands, and Actions. It does not have a loader-and-reva
 
 Not a framework. A contract.
 
-## Status
-
-Pre-release. Designed against Astro 6. Not yet published to npm.
-
 ## Install
 
 ```bash
