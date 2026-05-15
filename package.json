@@ -5,12 +5,26 @@
   "keywords": [
     "action",
     "astro",
+    "astro-component",
+    "astro-integration",
     "data",
     "loader",
     "local-first",
-    "rafters"
+    "rafters",
+    "revalidation",
+    "withastro",
+    "zod"
   ],
+  "homepage": "https://github.com/rafters-studio/astro-data#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/astro-data/issues"
+  },
   "license": "MIT",
+  "author": "Sean Silvius <ssilvius@users.noreply.github.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafters-studio/astro-data.git"
+  },
   "files": [
     "dist",
     "README.md",
@@ -43,6 +57,10 @@
       "types": "./dist/zustand.d.ts",
       "import": "./dist/zustand.js"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
