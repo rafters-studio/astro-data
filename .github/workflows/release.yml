@@ -33,7 +33,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          # Node 24.12 ships npm 11.x; trusted-publishing OIDC requires npm 11.5+.
+          # Node 22 (npm 10.x) errors with ENEEDAUTH on `npm publish --provenance`.
+          # Mirrors mail + rafters release.yml.
+          node-version: 24.12
           cache: pnpm
           # Intentionally no registry-url. See OIDC gotchas in file header.
 
