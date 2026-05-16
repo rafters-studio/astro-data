@@ -1,31 +1,56 @@
 name: Release
 
+# Triggered by pushing a v* tag. First publish of the package was manual
+# (under maintainer account); from then on releases flow through OIDC
+# trusted publishing.
+#
+# OIDC gotchas (recall from mail + rafters):
+# - Do NOT set registry-url on setup-node. It writes a .npmrc that
+#   blocks OIDC auth by forcing token-based publishing.
+# - Do NOT set NODE_AUTH_TOKEN in the publish step env. Any value
+#   (including empty) short-circuits the OIDC path.
+# - The id-token: write permission is required.
+# - --provenance triggers the OIDC exchange with npmjs.org.
 on:
   push:
-    branches: [main]
+    tags: ["v*"]
 
 permissions:
-  contents: write
-  pull-requests: write
   id-token: write
+  contents: write
 
 jobs:
   release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm verify
-      - run: pnpm build
-      - uses: changesets/action@v1
-        with:
-          publish: pnpm changeset publish
+          cache: pnpm
+          # Intentionally no registry-url. See OIDC gotchas in file header.
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify
+        run: pnpm verify
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish to npm
+        run: npm publish --access=public --provenance
+        # Intentionally no NODE_AUTH_TOKEN. See OIDC gotchas in file header.
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
