@@ -131,6 +131,8 @@ A loader is a typed, keyed, validated async function. It runs server-side — at
 }
 ```
 
+Loader keys are static at module definition. If you need per-input caching (e.g. "per-ship eligibility" where the same loader returns different data depending on a user selection), use raw `fetch` directly — loaders are scoped to navigation-stable data, not intra-page selection state. Mixing the two compromises the cache contract. If you hit this with enough frequency that raw fetch starts feeling like an escape hatch and not a deliberate choice, file an issue — that's the signal for the `key(input)` derivation form.
+
 ### Actions
 
 An action is a typed, validated server function that may revalidate loaders. Actions ride Astro's `defineAction` runtime: `<form method="POST" action={registerAction(module)}>` works with zero JavaScript, typed errors via `ActionError` and `isInputError()`, session integration via `Astro.session`.
@@ -159,6 +161,46 @@ This is RR7's model and TanStack Query's opt-in. It's the right default for an a
 ### Revalidation, not refetching
 
 `invalidate` marks loaders stale. Re-running happens on the next consumer demand — the next navigation that needs the loader, or the next island that subscribes to its key. Actions stay cheap; revalidation stays lazy.
+
+This is a **consumer-pull** model, not a push-and-refresh model. Two consequences worth knowing up front:
+
+- **Multi-page admins**: when an action invalidates a loader's key, the data refreshes on the next navigation that hits the loader. Most apps want this — it avoids re-running every loader on every mutation.
+- **Single-page admins with intra-page state**: the invalidate fires correctly but no auto-refresh happens until you navigate. To get auto-refresh inside a single page, subscribe with `useLoaderData` (the island re-renders when its key is invalidated _and_ a fresh value is written back). If you only invalidate without re-running the loader, the cache is empty and the subscriber sees nothing new — that's the contract working as designed.
+
+Put differently: invalidation says "this is stale." Re-running the loader says "here's the new value." The consumer-pull model decouples those two so actions don't pay for re-fetches the user can't see.
+
+### Action defs are isomorphic
+
+Action-def modules (`src/action-defs/update-profile.ts` and friends) are imported by both `wrapAction` (server) and `useAction` (client) — they ride into the client bundle so the schema can validate optimistically and `useAction` can read the `revalidates` array.
+
+That means **top-level imports in action-def files land in the client bundle**. Server-only dependencies (`drizzle`, schema files, `cloudflare:workers` env, anything that uses Node APIs or secrets) must go _inside_ the handler body:
+
+```ts
+// ✗ Don't — drizzle import lands in the client bundle
+import { db } from "../db";
+
+export async function action(input: Input) {
+  return db.insert(...).values(input);
+}
+
+// ✓ Do — lazy import inside the handler keeps server deps server-side
+export async function action(input: Input) {
+  const { db } = await import("../db");
+  return db.insert(...).values(input);
+}
+```
+
+The runtime cost of the lazy import is one server-side `await` per call — negligible. The bundle cost of getting it wrong is a broken build (or worse, secrets shipped to the browser).
+
+### Astro 6 environment access
+
+On Astro 6, `Astro.locals.runtime.env` no longer exists. Read Cloudflare env via:
+
+```ts
+import { env } from "cloudflare:workers";
+```
+
+This is an Astro 6 migration note, not an astro-data requirement — but every Astro-on-Workers consumer hits it on first integration, so it's worth a callout next to the action-def isomorphism rule above.
 
 ## Composition
 

@@ -10,6 +10,8 @@ import {
   type ActionInput,
   type ActionModule,
   type ActionOutput,
+  type AstroActionFn,
+  type AstroActionResult,
   type LoaderModule,
   type LoaderOutput,
   getLoaderData,
@@ -17,6 +19,10 @@ import {
   setLoaderData,
   subscribeLoader,
 } from "./index.js";
+
+// Re-export so consumers importing from @rafters/astro-data/react still see
+// these as part of the React subpath surface (back-compat with 0.0.1).
+export type { AstroActionFn, AstroActionResult } from "./index.js";
 
 /**
  * Subscribe to a loader's cached value. On first mount, the provided initial
@@ -49,10 +55,6 @@ export function useLoaderData<M extends LoaderModule>(
   }
   return value as LoaderOutput<M>;
 }
-
-/** Shape mirroring what `astro:actions`' generated action handles return. */
-export type AstroActionResult<O> = { data?: O; error?: unknown };
-export type AstroActionFn<I, O> = (input: I) => Promise<AstroActionResult<O>>;
 
 export interface UseActionResult<M extends ActionModule> {
   run: (input: ActionInput<M>) => Promise<AstroActionResult<ActionOutput<M>>>;
