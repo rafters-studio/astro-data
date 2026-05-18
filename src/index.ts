@@ -10,8 +10,13 @@ import { defaultState, type RuntimeState } from "./internal/state.js";
 
 // ─── Module shapes ─────────────────────────────────────────────────────────
 
+// Method shorthand syntax (e.g. `loader(args): Promise<O>`) is intentional --
+// it gives the property bivariant parameter checking, which is what makes
+// `typeof import('../loaders/my-loader')` structurally satisfy `LoaderModule`
+// even though the loader's concrete input type is narrower than `unknown`.
+// Function-property syntax would force contravariance and break consumers.
 export interface LoaderModule<I = unknown, O = unknown> {
-  loader: (args: LoaderArgs<I>) => Promise<O>;
+  loader(args: LoaderArgs<I>): Promise<O>;
   /** Zod schema for runtime validation. Omit for parameter-less loaders. */
   loaderInput?: z.ZodType<I>;
   /** Hierarchical key. Required in v0.1 (filesystem derivation: v0.2). */
@@ -27,7 +32,7 @@ export interface LoaderModule<I = unknown, O = unknown> {
 }
 
 export interface ActionModule<I = unknown, O = unknown> {
-  action: (input: I, context: APIContext) => Promise<O>;
+  action(input: I, context: APIContext): Promise<O>;
   /** Zod schema. Required because Astro's defineAction requires it. */
   actionInput: z.ZodType<I>;
   /** Forwards to Astro's defineAction. Default: 'json'. */
@@ -184,6 +189,15 @@ export type ActionInput<M extends ActionModule> =
   M["actionInput"] extends z.ZodType<infer I> ? I : never;
 
 export type ActionOutput<M extends ActionModule> = Awaited<ReturnType<M["action"]>>;
+
+// ─── Astro action handle shape ─────────────────────────────────────────────
+// Mirrors what astro:actions' generated handles return: a callable that takes
+// the input and resolves to { data?, error? }. wrapAction (in ./astro) returns
+// this shape, useAction (in ./react) accepts this shape. Defined here so the
+// astro and react subpaths share one source of truth.
+
+export type AstroActionResult<O> = { data?: O; error?: unknown };
+export type AstroActionFn<I, O> = (input: I) => Promise<AstroActionResult<O>>;
 
 // ─── Re-exports for consumer convenience ───────────────────────────────────
 
