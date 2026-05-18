@@ -12,6 +12,7 @@ import {
   type ActionOutput,
   type AstroActionFn,
   type AstroActionResult,
+  type LoaderInput,
   type LoaderModule,
   type LoaderOutput,
   getLoaderData,
@@ -28,32 +29,79 @@ export type { AstroActionFn, AstroActionResult } from "./index.js";
  * Subscribe to a loader's cached value. On first mount, the provided initial
  * value is written to the cache so other islands subscribing to the same
  * loader key see consistent state.
+ *
+ * For static-key loaders: `useLoaderData(module, initial?)`.
+ * For dynamic-key loaders: `useLoaderData(module, input, initial?)` -- the
+ * input resolves the cache key for that specific instance.
  */
 export function useLoaderData<M extends LoaderModule>(
   module: M,
   initial?: LoaderOutput<M>,
+): LoaderOutput<M>;
+export function useLoaderData<M extends LoaderModule>(
+  module: M,
+  input: LoaderInput<M>,
+  initial?: LoaderOutput<M>,
+): LoaderOutput<M>;
+export function useLoaderData<M extends LoaderModule>(
+  module: M,
+  inputOrInitial?: LoaderInput<M> | LoaderOutput<M>,
+  maybeInitial?: LoaderOutput<M>,
 ): LoaderOutput<M> {
+  const { input, initial } = splitInputAndInitial<M>(module, inputOrInitial, maybeInitial);
+
   const hydratedRef = useRef(false);
   if (!hydratedRef.current && initial !== undefined) {
-    setLoaderData(module, initial);
+    if (input === undefined) {
+      setLoaderData(module, initial);
+    } else {
+      setLoaderData(module, input, initial);
+    }
     hydratedRef.current = true;
   }
 
   const subscribe = useCallback(
-    (listener: () => void) => subscribeLoader(module, listener),
-    [module],
+    (listener: () => void) =>
+      input === undefined
+        ? subscribeLoader(module, listener)
+        : subscribeLoader(module, input, listener),
+    [module, input],
   );
-  const getSnapshot = useCallback(() => getLoaderData(module) ?? initial, [module, initial]);
+  const getSnapshot = useCallback(
+    () => (input === undefined ? getLoaderData(module) : getLoaderData(module, input)) ?? initial,
+    [module, input, initial],
+  );
 
   const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   if (value === undefined) {
     throw new Error(
-      `@rafters/astro-data/react: useLoaderData called for ${JSON.stringify(
-        module.key,
-      )} with no cached value and no initial`,
+      `@rafters/astro-data/react: useLoaderData called for module with key ${
+        typeof module.key === "function" ? "(dynamic)" : JSON.stringify(module.key)
+      } with no cached value and no initial`,
     );
   }
   return value as LoaderOutput<M>;
+}
+
+// Overload disambiguation for useLoaderData. The two-arg form is ambiguous
+// between (module, initial) for static keys and (module, input) for dynamic
+// keys with no initial. We disambiguate by inspecting module.key: function
+// means the second arg is the input, otherwise it's the initial value.
+function splitInputAndInitial<M extends LoaderModule>(
+  module: M,
+  inputOrInitial: LoaderInput<M> | LoaderOutput<M> | undefined,
+  maybeInitial: LoaderOutput<M> | undefined,
+): { input: LoaderInput<M> | undefined; initial: LoaderOutput<M> | undefined } {
+  if (typeof module.key === "function") {
+    return {
+      input: inputOrInitial as LoaderInput<M>,
+      initial: maybeInitial,
+    };
+  }
+  return {
+    input: undefined,
+    initial: inputOrInitial as LoaderOutput<M> | undefined,
+  };
 }
 
 export interface UseActionResult<M extends ActionModule> {
