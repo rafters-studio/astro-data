@@ -131,7 +131,31 @@ A loader is a typed, keyed, validated async function. It runs server-side — at
 }
 ```
 
-Loader keys are static at module definition. If you need per-input caching (e.g. "per-ship eligibility" where the same loader returns different data depending on a user selection), use raw `fetch` directly — loaders are scoped to navigation-stable data, not intra-page selection state. Mixing the two compromises the cache contract. If you hit this with enough frequency that raw fetch starts feeling like an escape hatch and not a deliberate choice, file an issue — that's the signal for the `key(input)` derivation form.
+Loader keys can be **static** or **input-derived**. Static is the default and covers navigation-stable data:
+
+```ts
+export const key = ["dashboard"] as const;
+```
+
+Input-derived keys handle per-row or per-selection data — the same loader caches independently for each input value. Use a function that returns the resolved key:
+
+```ts
+export const key = (input: { shipId: string }) => ["gsf-ship-eligibility", input.shipId] as const;
+```
+
+The first element of the returned array is the **static prefix** — keep it stable across all inputs so hierarchical invalidation works uniformly. `invalidate(["gsf-ship-eligibility"])` then clears every per-ship entry in one call.
+
+For dynamic-key loaders, pass the input to the consumer-side helpers so they resolve to the right cache key:
+
+```ts
+// In .astro frontmatter
+const eligibility = await runLoader(ShipEligibility, Astro, { shipId });
+
+// In an island
+const data = useLoaderData(ShipEligibility, { shipId }, initialData);
+```
+
+Static-key consumers don't change — they continue to call `useLoaderData(MyLoader, initial)` and friends without the input argument.
 
 ### Actions
 
