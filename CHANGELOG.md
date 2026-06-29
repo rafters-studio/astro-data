@@ -1,5 +1,18 @@
 # @rafters/astro-data
 
+## 0.1.0
+
+Three exported subpaths were shipped as facades in 0.0.x. They are now real, with tests that run them.
+
+- **`/elements` was hollow.** Every `LoaderConsumer` / `ActionConsumer` / `FormConsumer` method threw `"not implemented"`, while `package.json` exported the subpath and the README listed it as shipping. They are now working framework-agnostic controllers: `LoaderConsumer` subscribes a host element to a loader (callback + `astro-data:loader` event), `ActionConsumer` runs an action with revalidation (callback + `astro-data:action` event), `FormConsumer` binds a `<form>`, serializes FormData, and runs the action. Covered by `tests/elements.spec.ts` in real chromium.
+- **`/nanostores` ignored its options.** `createNanostoresCache` accepted a `store` factory, discarded it, and returned an in-memory Map -- no nanostores anywhere, despite the dep and the "local-first" headline. It is now backed by real nanostores atoms (consumable by `@nanostores/react|solid|vue|lit`) with a `persist(store, key)` seam that wires durability per key. Composes with `@smugglr/nanostores`'s `smuggl(atom, ...)` -- the real bridge API, not the fictional `smugglrBridge({ db })` the README invented.
+- **`/zustand` ignored its options.** Same failure. Now a real vanilla zustand store with selective per-key subscription and a `middleware` seam that composes with `@smugglr/zustand`'s `smuggl(...)` middleware.
+- **Removed the navigation phantom.** The quickstart island imported `useNavigation` and `useForm` from `/react`; neither was ever implemented or specced (navigation tracking lives in rafters, not here). The example now uses the real `useAction(actions.foo, module)` signature and `update.pending`. `RuntimeState` is collapsed to just `{ cache }`: the `navigation` / `navigationListeners` / `pendingRevalidations` fields and the `actionStates` / `actionListeners` maps were written and read by nothing. The package is frameworkless and sits in Astro -- per-action and per-loader state belongs to the delivery layer (React hooks, element controllers), so the runtime owns only the cache.
+- **Internals.** Shared `isDescendant` / `hashKey` (`internal/keys.ts`) and a shared `runActionAndRevalidate` (`internal/run-action.ts`) used by both the React `useAction` and the element controllers, so the run-then-revalidate contract lives in one place.
+- **Test infra.** Browser provider migrated to the vitest 4.1 factory API (`@vitest/browser-playwright`); the old string `provider: "playwright"` no longer started.
+
+No breaking changes to the core (`@rafters/astro-data`) or `/react` type surface. The `/nanostores` and `/zustand` option shapes changed (`store` -> `persist` / `middleware`), but the prior options were no-ops, so no working consumer relied on them.
+
 ## 0.0.3
 
 Input-derived loader keys (#7).

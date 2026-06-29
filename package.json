@@ -1,6 +1,6 @@
 {
   "name": "@rafters/astro-data",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "The loader and action contract Astro is missing. Composes with smugglr for local-first, with kelex for schema-generated forms.",
   "keywords": [
     "action",
@@ -76,7 +76,8 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
-    "@vitest/browser": "^4.1.0",
+    "@vitest/browser": "^4.1.9",
+    "@vitest/browser-playwright": "^4.1.9",
     "astro": "^6.1.9",
     "lefthook": "^2.1.4",
     "nanostores": "^1.0.0",
@@ -86,7 +87,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.0",
+    "vitest": "^4.1.9",
     "zustand": "^5.0.0"
   },
   "peerDependencies": {

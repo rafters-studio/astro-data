@@ -87,7 +87,8 @@ Consume from an island:
 
 ```tsx
 // src/components/Dashboard.tsx
-import { useLoaderData, useAction, useNavigation } from "@rafters/astro-data/react";
+import { useLoaderData, useAction } from "@rafters/astro-data/react";
+import { actions } from "astro:actions";
 import * as Dashboard from "../loaders/dashboard";
 import * as UpdateProfile from "../actions/update-profile";
 
@@ -97,16 +98,16 @@ export default function Dashboard({
   initialData: Awaited<ReturnType<typeof Dashboard.loader>>;
 }) {
   const data = useLoaderData(Dashboard, initialData);
-  const update = useAction(UpdateProfile);
-  const nav = useNavigation();
+  // useAction pairs the generated Astro action handle with its module, so it
+  // can read `revalidates` and invalidate the right loader keys on success.
+  const update = useAction(actions.updateProfile, UpdateProfile);
 
   return (
     <>
       <p>{data.profile?.name}</p>
       <button onClick={() => update.run({ name: "New" })} disabled={update.pending}>
-        Save
+        {update.pending ? "Saving…" : "Save"}
       </button>
-      {nav.pending && <span>Saving…</span>}
     </>
   );
 }
@@ -232,18 +233,23 @@ The package is the floor. Two optional addons multiply it.
 
 ### smugglr — local-first SQLite sync
 
-[smugglr](https://smugglr.dev) is a SQLite sync engine. Pass its nanostores bridge into the cache adapter and your data becomes durable, syncs across devices, and survives offline.
+[smugglr](https://smugglr.dev) is a SQLite sync engine. Its `@smugglr/nanostores` plugin persists a nanostores atom to a smugglr-managed table and rehydrates it on sync. The nanostores cache adapter exposes a `persist` seam that hands you each backing atom, so you wire durability per key:
 
 ```ts
 import { createNanostoresCache } from "@rafters/astro-data/nanostores";
-import { smugglrBridge } from "smugglr/nanostores";
+import { smuggl } from "@smugglr/nanostores";
 
 configure({
-  cache: createNanostoresCache({ store: smugglrBridge({ db: "app" }) }),
+  cache: createNanostoresCache({
+    persist: (store, key) =>
+      smuggl(store, { smugglr, executor, table: "astro_data_cache", key: key.join("/") }),
+  }),
 });
 ```
 
-Your loaders and actions don't change. Smugglr keeps the underlying storage in sync with your D1 (or Turso, or rqlite, or any other SQLite backend) in the background. Mutations land locally first, sync when network returns.
+Your loaders and actions don't change. Smugglr keeps each cached entry in sync with your D1 (or Turso, or rqlite, or any other SQLite backend) in the background. Mutations land locally first, sync when network returns.
+
+Zustand users get the same composition through `createZustandCache({ middleware })` and the `@smugglr/zustand` middleware.
 
 ### kelex — schema-generated forms
 
@@ -269,13 +275,13 @@ See [`src/index.ts`](./src/index.ts) for the full contract. Anything not exporte
 
 ### Subpath exports
 
-| Entry                            | Contents                                                           |
-| -------------------------------- | ------------------------------------------------------------------ |
-| `@rafters/astro-data`            | Core types, primitives, `Cache` interface                          |
-| `@rafters/astro-data/react`      | `useLoaderData`, `useAction`, `useNavigation`, `useForm`, `<Form>` |
-| `@rafters/astro-data/elements`   | `LoaderConsumer`, `ActionConsumer`, `FormConsumer` controllers     |
-| `@rafters/astro-data/nanostores` | `createNanostoresCache`                                            |
-| `@rafters/astro-data/zustand`    | `createZustandCache`                                               |
+| Entry                            | Contents                                                       |
+| -------------------------------- | -------------------------------------------------------------- |
+| `@rafters/astro-data`            | Core types, primitives, `Cache` interface                      |
+| `@rafters/astro-data/react`      | `useLoaderData`, `useAction`, `<Form>`                         |
+| `@rafters/astro-data/elements`   | `LoaderConsumer`, `ActionConsumer`, `FormConsumer` controllers |
+| `@rafters/astro-data/nanostores` | `createNanostoresCache` (pass `persist` for smugglr)           |
+| `@rafters/astro-data/zustand`    | `createZustandCache` (pass `middleware` for smugglr)           |
 
 ## Why not TanStack Query?
 

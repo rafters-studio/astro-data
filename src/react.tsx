@@ -16,10 +16,10 @@ import {
   type LoaderModule,
   type LoaderOutput,
   getLoaderData,
-  invalidate,
   setLoaderData,
   subscribeLoader,
 } from "./index.js";
+import { runActionAndRevalidate } from "./internal/run-action.js";
 
 // Re-export so consumers importing from @rafters/astro-data/react still see
 // these as part of the React subpath surface (back-compat with 0.0.1).
@@ -129,23 +129,11 @@ export function useAction<M extends ActionModule>(
     async (input: ActionInput<M>): Promise<AstroActionResult<ActionOutput<M>>> => {
       setPending(true);
       setError(null);
-      try {
-        const result = await astroAction(input);
-        if (result.error) {
-          setError(result.error);
-        } else if (result.data !== undefined) {
-          setData(result.data);
-          if (module.revalidates) {
-            for (const key of module.revalidates) invalidate(key);
-          }
-        }
-        return result;
-      } catch (e) {
-        setError(e);
-        return { error: e };
-      } finally {
-        setPending(false);
-      }
+      const result = await runActionAndRevalidate(astroAction, module, input);
+      if (result.error) setError(result.error);
+      else if (result.data !== undefined) setData(result.data);
+      setPending(false);
+      return result;
     },
     [astroAction, module],
   );

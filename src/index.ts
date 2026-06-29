@@ -85,14 +85,7 @@ export function configure(opts: { cache: Cache }): void {
 }
 
 export function createDataLayer(opts: { cache: Cache }): DataLayer {
-  const state: RuntimeState = {
-    cache: opts.cache,
-    actionStates: new Map(),
-    actionListeners: new Map(),
-    navigation: { pending: false, revalidating: [] },
-    navigationListeners: new Set(),
-    pendingRevalidations: new Map(),
-  };
+  const state: RuntimeState = { cache: opts.cache };
   return {
     runLoader: ((module, astro, input) =>
       runLoaderWith(state, module, astro, input)) as DataLayer["runLoader"],
